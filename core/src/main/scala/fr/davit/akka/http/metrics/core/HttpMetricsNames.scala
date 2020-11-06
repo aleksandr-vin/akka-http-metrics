@@ -16,6 +16,8 @@
 
 package fr.davit.akka.http.metrics.core
 
+import com.typesafe.config.Config
+
 trait HttpMetricsNames {
   def requests: String
   def requestsActive: String
@@ -63,4 +65,15 @@ object HttpMetricsNames {
     def withConnectionsActive(name: String): HttpMetricsNamesImpl = copy(connectionsActive = name)
   }
 
+  def apply(config: Config): HttpMetricsNames = HttpMetricsNamesImpl(
+    config.getString("requests"),
+    config.getString("requests-active"),
+    config.getString("requests-size"),
+    config.getString("responses"),
+    config.getString("responses-errors"),
+    config.getString("responses-duration"),
+    config.getString("responses-size"),
+    config.getString("connections"),
+    config.getString("connections-active")
+  )
 }

@@ -40,7 +40,7 @@ object HttpMetricsRegistry {
   }
 
   final case class PathDimension(value: String) extends Dimension {
-    override def key = PathDimension.Key
+    override def key: String = PathDimension.Key
   }
 
   object StatusGroupDimension {
@@ -57,6 +57,8 @@ object HttpMetricsRegistry {
       case _                          => "other"
     }
   }
+
+  final case class RawDimension(key: String, value: String) extends Dimension
 }
 
 abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMetricsHandler {

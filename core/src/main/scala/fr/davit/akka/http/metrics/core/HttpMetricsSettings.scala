@@ -16,8 +16,15 @@
 
 package fr.davit.akka.http.metrics.core
 
-import akka.http.scaladsl.model.HttpResponse
+import akka.actor.ActorSystem
+import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
+import com.typesafe.config.{Config, ConfigException}
+import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.RawDimension
+import fr.davit.akka.http.metrics.core.HttpMetricsSettings.HttpMetricsSettingsImpl
+
 import scala.collection.immutable
+import scala.jdk.CollectionConverters._
+import scala.util.matching.Regex
 
 trait HttpMetricsSettings {
 
@@ -68,23 +75,13 @@ trait HttpMetricsSettings {
 
 object HttpMetricsSettings {
 
-  def apply(
-      namespace: String,
-      metricsNames: HttpMetricsNames,
-      defineError: HttpResponse => Boolean,
-      includeMethodDimension: Boolean,
-      includePathDimension: Boolean,
-      includeStatusDimension: Boolean,
-      serverDimensions: immutable.Seq[Dimension]
-  ): HttpMetricsSettings = HttpMetricsSettingsImpl(
-    namespace,
-    metricsNames,
-    defineError,
-    includeMethodDimension,
-    includePathDimension,
-    includeStatusDimension,
-    serverDimensions
-  )
+  val ConfigPrefix           = "akka.http.server.metrics"
+  val ServerDimension: Regex = """(.+)=(.+)""".r
+
+  def defaultError(response: HttpResponse): Boolean = response.status match {
+    case _: StatusCodes.ServerError => true
+    case _                          => false
+  }
 
   private[metrics] case class HttpMetricsSettingsImpl(
       namespace: String,
@@ -104,4 +101,55 @@ object HttpMetricsSettings {
     def withIncludeStatusDimension(include: Boolean): HttpMetricsSettings           = copy(includeStatusDimension = include)
     def withServerDimensions(labels: immutable.Seq[Dimension]): HttpMetricsSettings = copy(serverDimensions = labels)
   }
+
+  def apply(
+      namespace: String,
+      metricsNames: HttpMetricsNames,
+      defineError: HttpResponse => Boolean,
+      includeMethodDimension: Boolean,
+      includePathDimension: Boolean,
+      includeStatusDimension: Boolean,
+      serverDimensions: immutable.Seq[Dimension]
+  ): HttpMetricsSettings = HttpMetricsSettingsImpl(
+    namespace,
+    metricsNames,
+    defineError,
+    includeMethodDimension,
+    includePathDimension,
+    includeStatusDimension,
+    serverDimensions
+  )
+
+}
+
+trait HttpMetricsSettingsCompanion[T <: HttpMetricsSettings] {
+
+  def apply(system: ActorSystem): HttpMetricsSettings =
+    apply(system.settings.config.getConfig(HttpMetricsSettings.ConfigPrefix))
+
+  def apply(config: Config): HttpMetricsSettings = {
+    HttpMetricsSettingsImpl(
+      config.getString("namespace"),
+      HttpMetricsNames(config.getConfig("names")),
+      HttpMetricsSettings.defaultError,
+      config.getBoolean("include-method-dimension"),
+      config.getBoolean("include-path-dimension"),
+      config.getBoolean("include-status-dimension"),
+      config
+        .getStringList("server-dimensions")
+        .asScala
+        .map {
+          case HttpMetricsSettings.ServerDimension(key, value) =>
+            RawDimension(key, value)
+          case faulty =>
+            throw new ConfigException.BadValue(
+              config.origin(),
+              "server-dimensions",
+              s"expected 'key=value', got $faulty"
+            )
+        }
+        .toList
+    )
+  }
+
 }
