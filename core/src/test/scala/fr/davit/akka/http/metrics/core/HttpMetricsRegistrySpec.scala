@@ -37,7 +37,7 @@ class HttpMetricsRegistrySpec
 
   implicit val materializer: Materializer = Materializer(system)
 
-  final case object TestDimension extends Dimension {
+  case object TestDimension extends Dimension {
     override def key: String   = "env"
     override def value: String = "test"
   }

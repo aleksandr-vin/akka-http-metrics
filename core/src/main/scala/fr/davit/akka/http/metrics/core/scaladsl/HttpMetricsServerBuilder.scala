@@ -16,7 +16,7 @@
 
 package fr.davit.akka.http.metrics.core.scaladsl
 
-import akka.actor.ClassicActorSystemProvider
+import akka.actor.ActorSystem
 import akka.event.LoggingAdapter
 import akka.http.scaladsl.Http.ServerBinding
 import akka.http.scaladsl._
@@ -45,7 +45,7 @@ final case class HttpMetricsServerBuilder(
     context: ConnectionContext,
     log: LoggingAdapter,
     settings: ServerSettings,
-    system: ClassicActorSystemProvider,
+    system: ActorSystem,
     materializer: Materializer
 ) {
 
@@ -115,14 +115,14 @@ object HttpMetricsServerBuilder {
       interface: String,
       port: Int,
       metricsHandler: HttpMetricsHandler,
-      system: ClassicActorSystemProvider
+      system: ActorSystem
   ): HttpMetricsServerBuilder =
     HttpMetricsServerBuilder(
       interface,
       port,
       metricsHandler,
       HttpConnectionContext,
-      system.classicSystem.log,
+      system.log,
       ServerSettings(system.classicSystem),
       system,
       SystemMaterializer(system).materializer

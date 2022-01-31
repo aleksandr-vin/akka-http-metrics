@@ -39,7 +39,6 @@ class HttpMetricsSpec
     with AnyFlatSpecLike
     with Matchers
     with ScalaFutures
-    with MockFactory
     with BeforeAndAfterAll {
 
   implicit val ec: ExecutionContext = system.dispatcher
@@ -111,7 +110,7 @@ class HttpMetricsSpec
     val response = CaptureOne[HttpResponse]()
     (metricsHandler.onRequest _)
       .expects(capture(request))
-      .onCall { req: HttpRequest => req }
+      .onCall { (req: HttpRequest) => req }
 
     server
       .expects(*)
@@ -145,7 +144,7 @@ class HttpMetricsSpec
     val response = CaptureOne[HttpResponse]()
     (metricsHandler.onRequest _)
       .expects(capture(request))
-      .onCall { req: HttpRequest => req }
+      .onCall { (req: HttpRequest) => req }
 
     server
       .expects(*)
@@ -177,7 +176,7 @@ class HttpMetricsSpec
     val response = CaptureOne[HttpResponse]()
     (metricsHandler.onRequest _)
       .expects(capture(request))
-      .onCall { req: HttpRequest => req }
+      .onCall { (req: HttpRequest) => req }
 
     server
       .expects(*)

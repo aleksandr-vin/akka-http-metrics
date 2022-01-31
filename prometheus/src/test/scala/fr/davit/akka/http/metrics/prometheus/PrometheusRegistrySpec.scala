@@ -27,7 +27,7 @@ import scala.concurrent.duration._
 
 class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
 
-  final case object TestDimension extends Dimension {
+  case object TestDimension extends Dimension {
     override def key: String   = "env"
     override def value: String = "test"
   }
